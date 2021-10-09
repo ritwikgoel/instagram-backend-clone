@@ -48,7 +48,7 @@ func posts(response http.ResponseWriter, request *http.Request){
 	http.Post("localhost:8080/posts", "application/json",bytes.NewBuffer(b))
 	
 }
-func getuser(response http.ResponseWriter, request *http.Request){
+func Getuser(response http.ResponseWriter, request *http.Request){
 	response.Header().Add("content-type","application/json")
 	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
 	collection := Clientt.Database("admin").Collection("admin")
@@ -90,7 +90,7 @@ func main() {
 	}
 	http.HandleFunc("/users",users)
 	http.HandleFunc("/posts",posts)
-	http.HandleFunc("/users/find/",getuser)
+	http.HandleFunc("/users/find/",Getuser)
 	http.HandleFunc("/posts/find/",getposts)
 	http.HandleFunc("/listallposts/",listall)
 	http.ListenAndServe(":8080",nil)
