@@ -1,61 +1,98 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
-
 type User struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Name string             `json:"name,omitempty" bson:"name,omitempty"`
-	Email  string             `json:"email,omitempty" bson:"email,omitempty"`
-	Password  string             `json:"password,omitempty" bson:"password,omitempty"`
-}
-var client *mongo.Client
-
-
-func homePage(response http.ResponseWriter, request *http.Request){
-	fmt.Fprint(response,"Home Page")
+	ID    string   
+	Name string             
+	Email  string           
+	Password  string        
 }
 
-func createUser(response http.ResponseWriter, request *http.Request){
+type Posts struct {
+	USERID string
+	ID    string   
+	Caption string             
+	URL  string           
+	Time  string        
+}
+
+func users(response http.ResponseWriter, request *http.Request){
 	response.Header().Add("content-type","application/json")
-	var user User
-	json.NewDecoder(request.Body).Decode(&user)
-	collection := client.Database("ritwikgoel").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	result, _ := collection.InsertOne(ctx, user)
-	json.NewEncoder(response).Encode(result)
+	data := User{"1", "ash", "example@gmail.com","admin"}
+	b, _ := json.Marshal(data)
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("admin")
+	collection.InsertOne(context.TODO(), data)
+	http.Post("localhost:8080/users", "application/json",bytes.NewBuffer(b))
 	
 }
 
-func GetUser(response http.ResponseWriter, request *http.Request) {
-	response.Header().Set("content-type", "application/json")
-	var user User
-	collection := client.Database("ritwikgoel").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	collection.Find(ctx, bson.M{})
-	json.NewEncoder(response).Encode(user)
+func posts(response http.ResponseWriter, request *http.Request){
+	response.Header().Add("content-type","application/json")
+	data := Posts{"1", "2", "golang is hard to learn","googleimages.com","2021-01-01 00:00:01"}
+	b, _ := json.Marshal(data)
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("posts")
+	collection.InsertOne(context.TODO(), data)
+	http.Post("localhost:8080/posts", "application/json",bytes.NewBuffer(b))
+	
+}
+func getuser(response http.ResponseWriter, request *http.Request){
+	response.Header().Add("content-type","application/json")
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("admin")
+	fmt.Print(collection.FindOne(context.TODO(),request.URL.String()))	
+
 }
 
+func getposts(response http.ResponseWriter, request *http.Request){
+	response.Header().Add("content-type","application/json")
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("posts")
+	fmt.Print(collection.FindOne(context.TODO(),request.URL.String()))	
 
-func main(){
-	fmt.Print("Starting")
+}
+func listall(response http.ResponseWriter, request *http.Request){
+	response.Header().Add("content-type","application/json")
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("posts")
+	fmt.Print(collection)
+
+}
+
+func main() {
+	fmt.Print("init")
+	Clientt, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	//Yes i know i pushed the password. 
+	if err != nil {
+		log.Fatal(err)
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client, _ = mongo.Connect(ctx, clientOptions)
-
-	http.HandleFunc("/",homePage)
-	//createUserr:=createUser()
-	http.HandleFunc("/createUser",createUser)
-	http.HandleFunc("/GetUser",GetUser)
+	err = Clientt.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer Clientt.Disconnect(ctx)
+	err = Clientt.Ping(ctx, readpref.Primary())
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.HandleFunc("/users",users)
+	http.HandleFunc("/posts",posts)
+	http.HandleFunc("/users/find/",getuser)
+	http.HandleFunc("/posts/find/",getposts)
+	http.HandleFunc("/listallposts/",listall)
 	http.ListenAndServe(":8080",nil)
+
 }
