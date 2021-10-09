@@ -1,13 +1,13 @@
 package main
 
 import (
-	 "bytes"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
-    "encoding/json"
 
 	//"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,6 +29,13 @@ func users(response http.ResponseWriter, request *http.Request){
 
 	http.Post("localhost:8080/users", "application/json",bytes.NewBuffer(b))
 	
+}
+func getuser(response http.ResponseWriter, request *http.Request){
+	response.Header().Add("content-type","application/json")
+	Clientt, _ := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0.9w0dh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	collection := Clientt.Database("admin").Collection("admin")
+	fmt.Print(collection.FindOne(context.TODO(),request.URL.String()))	
+
 }
 
 func main() {
@@ -53,14 +60,14 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	// fmt.Println(databases)
-	collection := Clientt.Database("admin").Collection("admin")
-	fmt.Print(collection)
-	data := User{"1", "ash", "example@gmail.com","admin"}
-	collection.InsertOne(context.TODO(), data)
-	if err != nil {
-    	log.Fatal(err)
-	}
-	http.HandleFunc("/users",nil)
+	
+	// data := User{"1", "ash", "example@gmail.com","admin"}
+	// collection.InsertOne(context.TODO(), data)
+	// if err != nil {
+    // 	log.Fatal(err)
+	// }
+	http.HandleFunc("/users",users)
+	http.HandleFunc("/users/find/",getuser)
 	http.ListenAndServe(":8080",nil)
 
 }
