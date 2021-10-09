@@ -108,8 +108,8 @@ func main() {
 	//Handing routes
 	http.HandleFunc("/users",users)
 	http.HandleFunc("/posts",posts)
-	http.HandleFunc("/users/find/",Getuser)
-	http.HandleFunc("/posts/find/",getposts)
+	http.HandleFunc("/users/:find/",Getuser)
+	http.HandleFunc("/posts/:find/",getposts)
 	http.HandleFunc("/listallposts/",listall)
 	http.ListenAndServe(":8080",nil)//Listening on port 8080
 }
